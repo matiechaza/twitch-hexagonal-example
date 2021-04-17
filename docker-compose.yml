@@ -1,0 +1,51 @@
+version: '3.2'
+
+services:
+  web:
+    image: attendize_web:latest
+    ports:
+    - "8080:80"
+    - "8081:443"
+    volumes:
+      - .:/usr/share/nginx/html
+      - .:/var/www
+    depends_on:
+      - db
+      - maildev
+      - redis
+      - worker
+    env_file:
+      - ./.env
+  worker:
+    image: attendize_worker:latest
+    depends_on:
+      - db
+      - maildev
+      - redis
+    volumes:
+      - .:/usr/share/nginx/html
+      - .:/var/www
+  db:
+    image: mysql:5.7.23
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: "yes"
+      MYSQL_HOST: ${DB_HOST}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - "mysql-data:/var/lib/mysql"
+  maildev:
+    image: maildev/maildev
+    ports:
+      - "1080:80"
+  redis:
+    image: redis
+
+volumes:
+    mysql-data:
